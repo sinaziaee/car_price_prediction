@@ -1,0 +1,15 @@
+[project]
+name = "car-price-prediction"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "pandas",
+    "ipykernel",
+    "polars",
+    "scikit-learn",
+    "pyarrow",
+    "category-encoders",
+]
