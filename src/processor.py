@@ -1,11 +1,12 @@
+import joblib
 import polars as pl
-from utils import prepare_input_for_prediction, scale_numerical_columns, scale_target, target_encode_nominal_columns, onehot_encode_nominal_columns
+from .utils import prepare_input_for_prediction, scale_numerical_columns, scale_target, target_encode_nominal_columns, onehot_encode_nominal_columns
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 
 
-class Preprocessor():
+class Processor():
     def __init__(self, dataset_path, columns_to_drop, categorical_columns, nominal_columns, remaining_nominal_columns, numerical_columns):
         self.dataset_path = dataset_path
         self.columns_to_drop = columns_to_drop
@@ -88,10 +89,11 @@ class Preprocessor():
         X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=test_size, random_state=random_state)
         return pl.from_pandas(X_train), pl.from_pandas(X_test), pl.from_pandas(y_train), pl.from_pandas(y_test)
 
-    def train(self, X_train: pl.DataFrame, y_train: pl.DataFrame) -> None:
+    def train(self, X_train: pl.DataFrame, y_train: pl.DataFrame) -> LinearRegression:
         model = LinearRegression()
         self.model = model
         model.fit(X_train, y_train)
+        return model
     
     def score(self, X_test: pl.DataFrame, y_test: pl.DataFrame) -> None:
         y_pred = self.model.predict(X_test)
@@ -112,6 +114,21 @@ class Preprocessor():
         # Convert to numeric (float) to match training dtypes used by the model
         prepared_input = prepared_input.astype(float)
         return prepared_input
+    
+    def preprocess(self):
+        data, target = self.fix_null_values()
+        data, target = self.scale_numerical_columns(data, target)
+        self.find_unique_values(data)
+        data = self.encode_categorical_features(data, target)
+        X_train, X_test, y_train, y_test = self.split_data(data, target)
+        return X_train, X_test, y_train, y_test
+    
+    def train_and_evaluate(self, X_train: pl.DataFrame, y_train: pl.DataFrame, X_test: pl.DataFrame, y_test: pl.DataFrame) -> None:
+        model = self.train(X_train, y_train)
+        self.score(X_test, y_test)
+        # save model for inference
+        self.model = model
+        # Note: Model saving is now handled in the CLI (main.py)
     
     def infer(self, df: pd.DataFrame) -> float:
         predicted_price_scaled = self.model.predict(df)
