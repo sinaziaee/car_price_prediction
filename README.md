@@ -25,7 +25,7 @@ docker build -t car-price:latest .
 
 How to Run with docker:
 ```
-docker run -it --rm --entrypoint /bin/bash car-price:latest
+docker run -p 3000:3000 -it --rm --entrypoint /bin/bash car-price:latest
 ```
 
 Now a shell is attached to the container:
@@ -35,11 +35,15 @@ python main.py train-eval
 python main.py infer --input-file input.json
 ```
 
+Before using bentoml, test to see if it exist in the container:
+which bentoml
 
-running bentoml service by iteself (without docker):
+running bentoml service by iteself (with or without docker):
 ```
 bentoml serve bentoml_service:CarPricePrediction --production
 ```
+
+There is a problem in which bentoml service does not start automatically.
 
 testing the service
 ```
