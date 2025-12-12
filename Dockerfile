@@ -25,8 +25,8 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
 COPY src ./src
-COPY main.py input.json ./
-# COPY data ./data
+COPY main.py input.json bentoml_service.py ./
+COPY data ./data
 COPY datasets ./datasets
 
 FROM python:3.12-slim AS runtime
@@ -42,11 +42,12 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
 
 COPY --from=build /app/.venv /app/.venv
 COPY --from=build /app/src ./src
-COPY --from=build /app/main.py /app/input.json ./
-# COPY --from=build /app/data ./data
+COPY --from=build /app/main.py /app/input.json /app/bentoml_service.py ./
+COPY --from=build /app/data ./data
 COPY --from=build /app/datasets ./datasets
 
 ENV PATH="/app/.venv/bin:${PATH}"
 
-ENTRYPOINT ["python", "main.py"]
-CMD ["--help"]
+# Default to BentoML service, can be overridden
+ENTRYPOINT ["bentoml", "serve"]
+CMD ["bentoml_service:CarPricePrediction", "--production"]

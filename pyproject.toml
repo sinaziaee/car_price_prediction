@@ -1,7 +1,7 @@
 [project]
 name = "car-price-prediction"
 version = "0.1.0"
-description = "Add your description here"
+description = "Car price prediction service with BentoML"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -13,4 +13,5 @@ dependencies = [
     "pyarrow",
     "category-encoders",
     "joblib",
+    "bentoml>=1.1.0",
 ]
