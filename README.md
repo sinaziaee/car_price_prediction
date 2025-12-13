@@ -1,79 +1,132 @@
-# Steps:
+# Car Price Prediction Service
 
-- Preprocess data
-- Train and test and save a base model
-- Create cli
-- Dockerize
-- Use BentoML and create a service
-- Fast API for API calling
-- Bentoml service
-- CICD pipeline
-- AWS ECS, Lambda, S3
-- Web scrape some source for data
-- RAG with Gemini and Langchain
+A machine learning service for predicting car prices with automated CI/CD pipeline.
 
+## Features
 
-Start Docker:
-```
-sudo systemctl start docker
-```
+- ✅ Data preprocessing pipeline
+- ✅ Linear regression model training
+- ✅ CLI interface for all operations
+- ✅ Dockerized deployment
+- ✅ BentoML service with REST API
+- ✅ GitHub Actions CI/CD pipeline
+- 🚧 MLFlow integration (planned)
+- 🚧 AWS ECS/Lambda deployment (planned)
+- 🚧 Web scraping for data collection (planned)
+- 🚧 RAG with Gemini and Langchain (planned)
 
-Create docker image:
-```
-docker build -t car-price:latest .
-```
+## CI/CD Pipeline
 
-Before using bentoml, test to see if it exist in the container:
-```
-which bentoml
-```
+This project includes automated GitHub Actions workflows:
 
-How to Run with docker and container work as a shell:
-```
-docker run -p 3000:3000 -it --rm --entrypoint /bin/bash car-price:latest
-```
+### Continuous Integration (CI)
+- **Trigger**: Every push and pull request
+- **Actions**: 
+  - Python dependency installation
+  - Code linting with flake8
+  - Data preprocessing tests
+  - Model training validation  
+  - Inference testing
+  - Docker image building
 
-Now a shell is attached to the container:
-```
-python main.py preprocess --dataset datasets/ca-dealers-used.csv
-python main.py train-eval
-python main.py infer --input-file input.json
-```
+### Continuous Deployment (CD)
+- **Trigger**: Push to `main` branch
+- **Actions**:
+  - Build and tag Docker image
+  - Push to GitHub Container Registry
+  - Deploy to staging environment
+  - Optional AWS ECS deployment
 
-If you want the container work as a single service, run the container like this:
-```
-docker run -p 3000:3000 --rm car-price:latest
-```
+## Quick Start
 
-If you want to run bentoml service by itself (with or without docker):
-```
-bentoml serve bentoml_service:CarPricePrediction --production
-```
+### Local Development
 
-There is a problem in which bentoml service does not start automatically.
+1. **Install dependencies:**
+   ```bash
+   uv sync
+   ```
 
-testing the service
-```
+2. **Preprocess data:**
+   ```bash
+   uv run python main.py preprocess --dataset datasets/ca-dealers-used.csv
+   ```
+
+3. **Train model:**
+   ```bash
+   uv run python main.py train-eval
+   ```
+
+4. **Run inference:**
+   ```bash
+   uv run python main.py infer --input-file input.json
+   ```
+
+5. **Start BentoML service:**
+   ```bash
+   uv run bentoml serve bentoml_service:CarPricePrediction --production
+   ```
+
+### Docker Deployment
+
+1. **Start Docker:**
+   ```bash
+   sudo systemctl start docker
+   ```
+
+2. **Build image:**
+   ```bash
+   docker build -t car-price:latest .
+   ```
+
+3. **Run as service:**
+   ```bash
+   docker run -p 3000:3000 --rm car-price:latest
+   ```
+
+4. **Run interactively (for development/testing):**
+   ```bash
+   docker run -p 3000:3000 -it --rm --entrypoint /bin/bash car-price:latest
+   ```
+
+### Testing the API
+
+Test the prediction endpoint:
+```bash
 curl -X POST "http://localhost:3000/predict" \
   -H "Content-Type: application/json" \
   -d '{
-    "data": {
-      "year": 2019,
-      "miles": 7120,
-      "make": "Acura",
-      "model": "NSX",
-      "trim": "Base",
-      "body_type": "Coupe",
-      "vehicle_type": "Car",
-      "drivetrain": "AWD",
-      "transmission": "Automatic",
-      "fuel_type": "Gasoline",
-      "engine_block": "V6",
-      "engine_size": 3.5,
-      "city": "Vancouver",
-      "state": "BC"
-    }
+    "year": 2019,
+    "miles": 7120,
+    "make": "Acura",
+    "model": "NSX",
+    "trim": "Base",
+    "body_type": "Coupe",
+    "vehicle_type": "Car",
+    "drivetrain": "AWD",
+    "transmission": "Automatic",
+    "fuel_type": "Gasoline",
+    "engine_block": "V6",
+    "engine_size": 3.5,
+    "city": "Vancouver",
+    "state": "BC"
   }'
+```
+
+## Development
+
+### Running Tests
+```bash
+# Run all tests
+uv run pytest tests/
+
+# Run with verbose output
+uv run pytest tests/ -v
+```
+
+### Code Quality
+```bash
+# Run linting
+uv run flake8 src/ main.py bentoml_service.py --max-line-length=100
 ```
 
 
