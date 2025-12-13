@@ -12,11 +12,10 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
     curl build-essential && \
     rm -rf /var/lib/apt/lists/*
 
-# Download the latest installer
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
-
-# Run the installer then remove it
-RUN sh /uv-installer.sh && rm /uv-installer.sh
+# Install uv using curl with retry mechanism
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh || \
+    (sleep 5 && curl -LsSf https://astral.sh/uv/install.sh | sh) || \
+    (sleep 10 && curl -LsSf https://astral.sh/uv/install.sh | sh)
 
 # Ensure the installed binary is on the `PATH`
 ENV PATH="/root/.local/bin/:$PATH"

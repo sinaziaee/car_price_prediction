@@ -23,7 +23,12 @@ Create docker image:
 docker build -t car-price:latest .
 ```
 
-How to Run with docker:
+Before using bentoml, test to see if it exist in the container:
+```
+which bentoml
+```
+
+How to Run with docker and container work as a shell:
 ```
 docker run -p 3000:3000 -it --rm --entrypoint /bin/bash car-price:latest
 ```
@@ -35,10 +40,12 @@ python main.py train-eval
 python main.py infer --input-file input.json
 ```
 
-Before using bentoml, test to see if it exist in the container:
-which bentoml
+If you want the container work as a single service, run the container like this:
+```
+docker run -p 3000:3000 --rm car-price:latest
+```
 
-running bentoml service by iteself (with or without docker):
+If you want to run bentoml service by itself (with or without docker):
 ```
 bentoml serve bentoml_service:CarPricePrediction --production
 ```
