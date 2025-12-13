@@ -40,8 +40,9 @@ jobs:
         for dirpath, dirnames, filenames in os.walk('.'):
             if '.venv' in dirnames:
                 continue  # skip .venv directory
-            for filename in filenames:
-                print(os.path.join(dirpath, filename))
+            else:
+                for filename in filenames:
+                    print(os.path.join(dirpath, filename))
         "
 
     - name: Run data preprocessing test
