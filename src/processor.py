@@ -16,6 +16,9 @@ class Processor():
         self.numerical_columns = numerical_columns
         self.df = self.read_dataset()
         
+        if self.df is None:
+            raise ValueError(f"Failed to load dataset from {dataset_path}")
+            
         self.min_max_scalers = None
         self.target_scaler = None
         self.unique_values_dict = None
@@ -24,12 +27,22 @@ class Processor():
 
         self.model = None
 
-    def read_dataset(self) -> pl.DataFrame | None:
+    def read_dataset(self) -> pl.DataFrame:
+        import os
+        print(f"📂 Attempting to read dataset from: {self.dataset_path}")
+        print(f"📂 File exists: {os.path.exists(self.dataset_path)}")
+        print(f"📂 Current working directory: {os.getcwd()}")
+        
         try:
             df = pl.read_csv(self.dataset_path)
+            if df is None or df.is_empty():
+                raise ValueError(f"Dataset is empty or could not be read from {self.dataset_path}")
+            print(f"✅ Successfully loaded dataset with shape: {df.shape}")
             return df
         except Exception as e:
-            return None
+            print(f"❌ Error reading dataset: {str(e)}")
+            print(f"❌ Error type: {type(e).__name__}")
+            raise ValueError(f"Failed to read dataset from {self.dataset_path}: {str(e)}")
 
     def fix_null_values(self) -> tuple[pl.DataFrame, pl.DataFrame]:
         df = self.df.drop(self.columns_to_drop)
