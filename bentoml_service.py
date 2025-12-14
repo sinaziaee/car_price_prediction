@@ -7,7 +7,7 @@ from src.processor import Processor
 
 
 # Load the processor and model
-model_dir = Path(__file__).parent / "src" / "models"
+model_dir = Path(__file__).parent / "models"
 processor: Processor = joblib.load(model_dir / "processor.joblib")
 processor.model = joblib.load(model_dir / "linear_regression_model.joblib")
 
