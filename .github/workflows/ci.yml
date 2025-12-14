@@ -94,10 +94,11 @@ jobs:
       
     - name: Build Docker image
       run: |
-        docker build -t car-price-prediction:${{ github.sha }} .
+        docker build -t car-price-prediction:latest .
+
         
     - name: Test Docker image
       run: |
         # Test if the container starts successfully
-        timeout 30s docker run --rm car-price-prediction:${{ github.sha }} bentoml --help || true
+        timeout 30s docker run --rm car-price-prediction:latest bentoml --help || true
         echo "✅ Docker image builds and runs successfully"
