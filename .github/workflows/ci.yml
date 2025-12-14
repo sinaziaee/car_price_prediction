@@ -33,7 +33,7 @@ jobs:
       run: |
         uv run python -m flake8 src/ main.py bentoml_service.py --max-line-length=100 --ignore=E203,W503 || true
         
-    - name: List all the files in the repo except the ones in .venv and .git folders
+    - name: List all the files in the repo except the ones in .venv and .git folders before the preprocessing
       run: |
         uv run python -c "
         import os
@@ -53,7 +53,18 @@ jobs:
       run: |
         # Test if training works
         uv run python main.py train-eval --data-dir data/processed_with_actions --model-dir src/models/linear_regression_test
-        
+
+    - name: List all the files in the repo except the ones in .venv and .git folders after the preprocessing and model training
+      run: |
+        uv run python -c "
+        import os
+        for dirpath, dirnames, filenames in os.walk('.'):
+            # Remove .venv and .git from dirnames to prevent walking into them
+            dirnames[:] = [d for d in dirnames if d not in ['.venv', '.git']]
+            for filename in filenames:
+                print(os.path.join(dirpath, filename))
+        "  
+      
     - name: Run inference test
       run: |
         # Test if inference works
