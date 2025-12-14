@@ -157,12 +157,8 @@ class Processor():
         y_train.write_csv(output_dir / "y_train.csv")
         y_test.write_csv(output_dir / "y_test.csv")
         
-        # setting model_dir to models/   later we need to find a better solution, to avoid setting this up manually here
-        model_dir = output_dir.parent.parent / "models"
-        model_dir.mkdir(parents=True, exist_ok=True)
-
         # Save processor
-        joblib.dump(self, model_dir / "processor.joblib")
+        joblib.dump(self, output_dir / "processor.joblib")
         
         print(f"✅ Preprocessing complete! Data saved to {output_dir}/")
         print(f"   - Training samples: {len(X_train)}")
