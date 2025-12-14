@@ -49,29 +49,29 @@ jobs:
         # Test if preprocessing works with sample data
         uv run python main.py preprocess --dataset datasets/ca-dealers-used.csv --output-dir data/processed_with_actions
         
-    # - name: Run model training test
-    #   run: |
-    #     # Test if training works
-    #     uv run python main.py train-eval --data-dir data/processed_with_actions --model-dir src/models/linear_regression_test
+    - name: Run model training test
+      run: |
+        # Test if training works
+        uv run python main.py train-eval --data-dir data/processed_with_actions --model-dir src/models/linear_regression_test
         
-    # - name: Run inference test
-    #   run: |
-    #     # Test if inference works
-    #     uv run python main.py infer --input-file input.json --model-dir src/models/linear_regression_test --data-dir data/processed_with_actions
+    - name: Run inference test
+      run: |
+        # Test if inference works
+        uv run python main.py infer --input-file input.json --model-dir src/models/linear_regression_test --data-dir data/processed_with_actions
         
-    # - name: Test BentoML service
-    #   run: |
-    #     # Test if BentoML service can be imported and initialized
-    #     uv run python -c "
-    #     import sys
-    #     sys.path.append('.')
-    #     try:
-    #         from bentoml_service import CarPricePrediction
-    #         print('✅ BentoML service imports successfully')
-    #     except Exception as e:
-    #         print(f'❌ BentoML service import failed: {e}')
-    #         exit(1)
-    #     "
+    - name: Test BentoML service
+      run: |
+        # Test if BentoML service can be imported and initialized
+        uv run python -c "
+        import sys
+        sys.path.append('.')
+        try:
+            from bentoml_service import CarPricePrediction
+            print('✅ BentoML service imports successfully')
+        except Exception as e:
+            print(f'❌ BentoML service import failed: {e}')
+            exit(1)
+        "
 
   # build-docker:
   #   runs-on: ubuntu-latest
