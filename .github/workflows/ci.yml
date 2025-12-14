@@ -47,12 +47,12 @@ jobs:
     - name: Run data preprocessing test
       run: |
         # Test if preprocessing works with sample data
-        uv run python main.py preprocess --dataset datasets/ca-dealers-used.csv --output-dir data/processed_with_actions
+        uv run python main.py preprocess --dataset datasets/ca-dealers-used.csv --output-dir data/processed
         
     - name: Run model training test
       run: |
         # Test if training works
-        uv run python main.py train-eval --data-dir data/processed_with_actions --model-dir models/models_with_actions
+        uv run python main.py train-eval --data-dir data/processed --model-dir models
 
     - name: List all the files in the repo except the ones in .venv and .git folders after the preprocessing and model training
       run: |
@@ -68,7 +68,7 @@ jobs:
     - name: Run inference test
       run: |
         # Test if inference works
-        uv run python main.py infer --input-file input.json --model-dir models/models_with_actions --data-dir data/processed_with_actions
+        uv run python main.py infer --input-file input.json --model-dir models --data-dir data/processed
         
     - name: Test BentoML service
       run: |
