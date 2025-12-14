@@ -3,7 +3,7 @@ name: CI Pipeline
 # Trigger the workflow on push (only if .json and .py files are changed)to any branch and pull requests to main
 on:
   push:
-    branches: [ "cicd" ]
+    branches: [ "ci" ]
     paths:
       - '**.py'
       - '**.json'
