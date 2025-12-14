@@ -11,6 +11,9 @@ wheels/
 
 data/
 
+*/cd.yml
+*/test_github_actions.yml
+
 
 *.joblib
 *.pkl
