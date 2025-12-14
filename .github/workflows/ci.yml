@@ -52,7 +52,7 @@ jobs:
     - name: Run model training test
       run: |
         # Test if training works
-        uv run python main.py train-eval --data-dir src/data/processed_with_actions --model-dir src/models/linear_regression_test
+        uv run python main.py train-eval --data-dir src/data/processed_with_actions --model-dir src/models/models_with_actions
 
     - name: List all the files in the repo except the ones in .venv and .git folders after the preprocessing and model training
       run: |
@@ -68,7 +68,7 @@ jobs:
     - name: Run inference test
       run: |
         # Test if inference works
-        uv run python main.py infer --input-file input.json --model-dir src/models/linear_regression_test --data-dir src/data/processed_with_actions
+        uv run python main.py infer --input-file input.json --model-dir src/models/models_with_actions --data-dir src/data/processed_with_actions
         
     - name: Test BentoML service
       run: |

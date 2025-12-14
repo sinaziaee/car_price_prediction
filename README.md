@@ -48,17 +48,17 @@ This project includes automated GitHub Actions workflows:
 
 2. **Preprocess data:**
    ```bash
-   uv run python main.py preprocess --dataset datasets/ca-dealers-used.csv
+   uv run python main.py preprocess --dataset datasets/ca-dealers-used.csv --output-dir data/processed
    ```
 
 3. **Train model:**
    ```bash
-   uv run python main.py train-eval
+   uv run python main.py train-eval --data-dir data/processed --model-dir models
    ```
 
 4. **Run inference:**
    ```bash
-   uv run python main.py infer --input-file input.json
+   uv run python main.py infer --input-file input.json --model-dir models --data-dir data/processed
    ```
 
 5. **Start BentoML service:**

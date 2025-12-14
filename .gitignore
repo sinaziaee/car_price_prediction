@@ -9,9 +9,8 @@ wheels/
 # Virtual environments
 .venv
 
-# Exclude processed data and models but allow dataset
-data/processed/
-data/processed_with_actions/
-data/test_processed/
+data/
+
+
 *.joblib
 *.pkl
