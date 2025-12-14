@@ -238,4 +238,4 @@ class Processor():
         prepared_data = self.prepare_data_for_inference(input_dict, original_df)
         predicted_price = self.infer(prepared_data)
         
-        return predicted_price
+        return predicted_price 
