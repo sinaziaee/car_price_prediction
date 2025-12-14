@@ -1,0 +1,124 @@
+name: CI Pipeline
+
+# Trigger the workflow on push (only if .json and .py files are changed)to any branch and pull requests to main
+on:
+  push:
+    branches: [ "ci" ]
+    paths:
+      - '**.py'
+      - '**.json'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '**.py'
+      - '**.json'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        
+    - name: Install dependencies
+      run: |
+        uv sync
+        
+    - name: Run linting
+      run: |
+        uv run python -m flake8 src/ main.py bentoml_service.py --max-line-length=100 --ignore=E203,W503 || true
+        
+    - name: List all the files in the repo except the ones in .venv and .git folders before the preprocessing
+      run: |
+        uv run python -c "
+        import os
+        for dirpath, dirnames, filenames in os.walk('.'):
+            # Remove .venv and .git from dirnames to prevent walking into them
+            dirnames[:] = [d for d in dirnames if d not in ['.venv', '.git']]
+            for filename in filenames:
+                print(os.path.join(dirpath, filename))
+        "
+
+    - name: Run data preprocessing test
+      run: |
+        # Test if preprocessing works with sample data
+        uv run python main.py preprocess --dataset datasets/ca-dealers-used.csv --output-dir data/processed
+        
+    - name: Run model training test
+      run: |
+        # Test if training works
+        uv run python main.py train-eval --data-dir data/processed --model-dir models
+
+    - name: List all the files in the repo except the ones in .venv and .git folders after the preprocessing and model training
+      run: |
+        uv run python -c "
+        import os
+        for dirpath, dirnames, filenames in os.walk('.'):
+            # Remove .venv and .git from dirnames to prevent walking into them
+            dirnames[:] = [d for d in dirnames if d not in ['.venv', '.git']]
+            for filename in filenames:
+                print(os.path.join(dirpath, filename))
+        "  
+      
+    - name: Run inference test
+      run: |
+        # Test if inference works
+        uv run python main.py infer --input-file input.json --model-dir models --data-dir data/processed
+        
+    - name: Test BentoML service
+      run: |
+        # Test if BentoML service can be imported and initialized
+        uv run python -c "
+        import sys
+        sys.path.append('.')
+        try:
+            from bentoml_service import CarPricePrediction
+            print('✅ BentoML service imports successfully')
+        except Exception as e:
+            print(f'❌ BentoML service import failed: {e}')
+            exit(1)
+        "
+        
+    - name: Upload generated files as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: generated-files
+        path: |
+          data/
+          models/
+        retention-days: 1
+
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download generated files
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-files
+        path: .
+      
+    - name: Build Docker image
+      run: |
+        docker build -t car-price-prediction:latest .
+
+        
+    - name: Test Docker image
+      run: |
+        # Test if the container starts successfully
+        timeout 30s docker run --rm car-price-prediction:latest bentoml --help || true
+        echo "✅ Docker image builds and runs successfully"

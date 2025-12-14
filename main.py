@@ -1,7 +1,5 @@
 import argparse
 import sys
-import joblib
-import polars as pl
 from pathlib import Path
 
 from src.processor import Processor
@@ -21,8 +19,7 @@ def preprocess(args):
                     "fuel_type", "city", "state"]
     remaining_nominal_columns = ["transmission", "drivetrain", "engine_block"]
 
-
-    # Initialize processor
+    # Initialize processor and run preprocessing
     processor = Processor(
         dataset_path=args.dataset,
         columns_to_drop=columns_to_drop,
@@ -32,87 +29,33 @@ def preprocess(args):
         numerical_columns=numerical_columns
     )
     
-    # Preprocess
-    X_train, X_test, y_train, y_test = processor.preprocess()
-    
     # Save preprocessed data
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    X_train.write_csv(output_dir / "X_train.csv")
-    X_test.write_csv(output_dir / "X_test.csv")
-    y_train.write_csv(output_dir / "y_train.csv")
-    y_test.write_csv(output_dir / "y_test.csv")
-    
-    # Save processor for later use
-    joblib.dump(processor, output_dir / "processor.joblib")
-    
-    print(f"✅ Preprocessing complete! Data saved to {output_dir}/")
-    print(f"   - Training samples: {len(X_train)}")
-    print(f"   - Test samples: {len(X_test)}")
-    print(f"   - Features: {X_train.shape[1]}")
+    processor.save_preprocessed_data(args.output_dir)
 
 
 def train_eval(args):
     """Train and evaluate the model."""
     print(f"🚀 Starting training and evaluation")
     
-    data_dir = Path(args.data_dir)
-    
-    # Load preprocessed data
-    print("📂 Loading preprocessed data...")
-    X_train = pl.read_csv(data_dir / "X_train.csv")
-    X_test = pl.read_csv(data_dir / "X_test.csv")
-    y_train = pl.read_csv(data_dir / "y_train.csv")
-    y_test = pl.read_csv(data_dir / "y_test.csv")
-    
-    # Load processor
-    processor = joblib.load(data_dir / "processor.joblib")
-    
-    # Train and evaluate
-    print("🎯 Training model...")
-    processor.train_and_evaluate(X_train, y_train, X_test, y_test)
+    # Load processor and train model
+    processor = Processor.load_from_preprocessed(args.data_dir)
+    processor.train_and_evaluate_from_files(args.data_dir)
     
     # Save model
-    model_dir = Path(args.model_dir)
-    model_dir.mkdir(parents=True, exist_ok=True)
-    
-    joblib.dump(processor.model, model_dir / "linear_regression_model.joblib")
-    joblib.dump(processor, model_dir / "processor.joblib")
-    
-    print(f"✅ Training complete! Model saved to {model_dir}/")
+    processor.save_model(args.model_dir)
 
 
 def infer(args):
     """Run inference on new data."""
     print(f"🔮 Running inference")
     
-    model_dir = Path(args.model_dir)
-    
-    print("------------------", model_dir)
-
-    # Load processor and model
-    print("📂 Loading model and processor...")
-    processor = joblib.load(model_dir / "processor.joblib")
-    processor.model = joblib.load(model_dir / "linear_regression_model.joblib")
-    
-    # Load input data from JSON file
-    import json
-    print(f"📄 Loading input from {args.input_file}")
-    with open(args.input_file, 'r') as f:
-        input_dict = json.load(f)
-    
-    print(f"📊 Input data: {input_dict}")
-    
-    # Prepare data for inference
-    original_df = pl.read_csv(model_dir.parent.parent / args.data_dir / "X_train.csv")
-    prepared_data = processor.prepare_data_for_inference(input_dict, original_df)
-    
-    # Run inference
-    predicted_price = processor.infer(prepared_data)
+    # Load processor and run inference
+    processor = Processor.load_from_model(args.model_dir)
+    predicted_price = processor.infer_from_json(args.input_file, args.data_dir)
     
     print(f"💰 Predicted Price: ${predicted_price:,.2f}")
     
+    # Save output if requested
     if args.output_file:
         output_path = Path(args.output_file)
         with output_path.open('w') as f:
@@ -171,7 +114,7 @@ Examples:
     train_eval_parser.add_argument(
         '--model-dir',
         type=str,
-        default='src/models',
+        default='models',
         help='Directory to save the trained model'
     )
     
@@ -183,7 +126,7 @@ Examples:
     infer_parser.add_argument(
         '--model-dir',
         type=str,
-        default='src/models',
+        default='models',
         help='Directory containing the trained model'
     )
     infer_parser.add_argument(

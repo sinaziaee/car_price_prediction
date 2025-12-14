@@ -14,4 +14,6 @@ dependencies = [
     "category-encoders",
     "joblib",
     "bentoml>=1.1.0",
+    "pytest",
+    "flake8",
 ]

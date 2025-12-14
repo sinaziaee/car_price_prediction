@@ -16,6 +16,9 @@ class Processor():
         self.numerical_columns = numerical_columns
         self.df = self.read_dataset()
         
+        if self.df is None:
+            raise ValueError(f"Failed to load dataset from {dataset_path}")
+            
         self.min_max_scalers = None
         self.target_scaler = None
         self.unique_values_dict = None
@@ -24,12 +27,14 @@ class Processor():
 
         self.model = None
 
-    def read_dataset(self) -> pl.DataFrame | None:
+    def read_dataset(self) -> pl.DataFrame:
         try:
             df = pl.read_csv(self.dataset_path)
+            if df is None or df.is_empty():
+                raise ValueError(f"Dataset is empty or could not be read from {self.dataset_path}")
             return df
         except Exception as e:
-            return None
+            raise ValueError(f"Failed to read dataset from {self.dataset_path}: {str(e)}")
 
     def fix_null_values(self) -> tuple[pl.DataFrame, pl.DataFrame]:
         df = self.df.drop(self.columns_to_drop)
@@ -134,3 +139,103 @@ class Processor():
         predicted_price_scaled = self.model.predict(df)
         predicted_price = self.target_scaler.inverse_transform(predicted_price_scaled).item()
         return int(predicted_price)
+    
+    def save_preprocessed_data(self, output_dir):
+        """Save preprocessed data and processor to specified directory."""
+        from pathlib import Path
+        import joblib
+        
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Preprocess data
+        X_train, X_test, y_train, y_test = self.preprocess()
+        
+        # Save data
+        X_train.write_csv(output_dir / "X_train.csv")
+        X_test.write_csv(output_dir / "X_test.csv")
+        y_train.write_csv(output_dir / "y_train.csv")
+        y_test.write_csv(output_dir / "y_test.csv")
+        
+        # Save processor
+        joblib.dump(self, output_dir / "processor.joblib")
+        
+        print(f"✅ Preprocessing complete! Data saved to {output_dir}/")
+        print(f"   - Training samples: {len(X_train)}")
+        print(f"   - Test samples: {len(X_test)}")
+        print(f"   - Features: {X_train.shape[1]}")
+    
+    @classmethod
+    def load_from_preprocessed(cls, data_dir):
+        """Load processor from preprocessed data directory."""
+        import joblib
+        from pathlib import Path
+        
+        data_dir = Path(data_dir)
+        return joblib.load(data_dir / "processor.joblib")
+    
+    def train_and_evaluate_from_files(self, data_dir):
+        """Load preprocessed data and train/evaluate model."""
+        from pathlib import Path
+        
+        data_dir = Path(data_dir)
+        
+        # Load preprocessed data
+        print("📂 Loading preprocessed data...")
+        X_train = pl.read_csv(data_dir / "X_train.csv")
+        X_test = pl.read_csv(data_dir / "X_test.csv")
+        y_train = pl.read_csv(data_dir / "y_train.csv")
+        y_test = pl.read_csv(data_dir / "y_test.csv")
+        
+        # Train and evaluate
+        print("🎯 Training model...")
+        self.train_and_evaluate(X_train, y_train, X_test, y_test)
+    
+    def save_model(self, model_dir):
+        """Save trained model to specified directory."""
+        import joblib
+        from pathlib import Path
+        
+        model_dir = Path(model_dir)
+        model_dir.mkdir(parents=True, exist_ok=True)
+        
+        joblib.dump(self.model, model_dir / "linear_regression_model.joblib")
+        joblib.dump(self, model_dir / "processor.joblib")
+        
+        print(f"✅ Training complete! Model saved to {model_dir}/")
+    
+    @classmethod
+    def load_from_model(cls, model_dir):
+        """Load processor and model from model directory."""
+        import joblib
+        from pathlib import Path
+        
+        model_dir = Path(model_dir)
+        
+        print("📂 Loading model and processor...")
+        processor = joblib.load(model_dir / "processor.joblib")
+        processor.model = joblib.load(model_dir / "linear_regression_model.joblib")
+        
+        return processor
+    
+    def infer_from_json(self, input_file, data_dir):
+        """Run inference from JSON input file."""
+        import json
+        from pathlib import Path
+        
+        # Load input data
+        print(f"📄 Loading input from {input_file}")
+        with open(input_file, 'r') as f:
+            input_dict = json.load(f)
+        
+        print(f"📊 Input data: {input_dict}")
+        
+        # Load original training data for feature alignment
+        data_path = Path(data_dir) / "X_train.csv"
+        original_df = pl.read_csv(data_path)
+        
+        # Prepare and run inference
+        prepared_data = self.prepare_data_for_inference(input_dict, original_df)
+        predicted_price = self.infer(prepared_data)
+        
+        return predicted_price 

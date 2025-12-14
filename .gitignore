@@ -9,7 +9,11 @@ wheels/
 # Virtual environments
 .venv
 
+data/
 
-*.csv
+*/cd.yml
+*/test_github_actions.yml
+
+
 *.joblib
 *.pkl
