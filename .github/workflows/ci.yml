@@ -83,6 +83,15 @@ jobs:
             print(f'❌ BentoML service import failed: {e}')
             exit(1)
         "
+        
+    - name: Upload generated files as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: generated-files
+        path: |
+          data/
+          models/
+        retention-days: 1
 
   build-docker:
     runs-on: ubuntu-latest
@@ -91,6 +100,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      
+    - name: Download generated files
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-files
+        path: .
       
     - name: Build Docker image
       run: |
