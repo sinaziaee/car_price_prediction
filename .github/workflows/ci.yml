@@ -84,20 +84,20 @@ jobs:
             exit(1)
         "
 
-  # build-docker:
-  #   runs-on: ubuntu-latest
-  #   needs: test
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: test
     
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
       
-  #   - name: Build Docker image
-  #     run: |
-  #       docker build -t car-price-prediction:${{ github.sha }} .
+    - name: Build Docker image
+      run: |
+        docker build -t car-price-prediction:${{ github.sha }} .
         
-  #   - name: Test Docker image
-  #     run: |
-  #       # Test if the container starts successfully
-  #       timeout 30s docker run --rm car-price-prediction:${{ github.sha }} bentoml --help || true
-  #       echo "✅ Docker image builds and runs successfully"
+    - name: Test Docker image
+      run: |
+        # Test if the container starts successfully
+        timeout 30s docker run --rm car-price-prediction:${{ github.sha }} bentoml --help || true
+        echo "✅ Docker image builds and runs successfully"
