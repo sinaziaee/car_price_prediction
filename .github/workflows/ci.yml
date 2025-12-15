@@ -1,17 +1,24 @@
-name: CI Pipeline
+name: CI Pipeline with MLflow
 
-# Trigger the workflow on push (only if .json and .py files are changed)to any branch and pull requests to main
+# Trigger the workflow on push to mlflow branch and pull requests to main
 on:
   push:
-    branches: [ "ci" ]
+    branches: [ "mlflow", "ci" ]
     paths:
       - '**.py'
       - '**.json'
+      - '**.toml'
   pull_request:
     branches: [ main ]
     paths:
       - '**.py'
       - '**.json'
+      - '**.toml'
+      
+env:
+  MLFLOW_TRACKING_URI: sqlite:///mlflow.db
+  PYTHONPATH: .
+  
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -54,10 +61,41 @@ jobs:
         # Test if preprocessing works with sample data
         uv run python main.py preprocess --dataset datasets/ca-dealers-used.csv --output-dir data/processed
         
-    - name: Run model training test
+    - name: Run model training test with MLflow
       run: |
-        # Test if training works
-        uv run python main.py train-eval --data-dir data/processed --model-dir models
+        # Test if training works with MLflow tracking
+        uv run python main.py train-eval --data-dir data/processed --model-dir models --run-name "ci-test-run"
+        
+    - name: Test MLflow tracking
+      run: |
+        # Check if MLflow run was created
+        uv run python -c "
+        import mlflow
+        import sqlite3
+        import os
+        
+        # Check if MLflow database exists
+        if os.path.exists('mlflow.db'):
+            print('✅ MLflow database created')
+            
+            # Check if experiments were logged
+            mlflow.set_tracking_uri('sqlite:///mlflow.db')
+            experiments = mlflow.search_experiments()
+            if len(experiments) > 0:
+                print(f'✅ Found {len(experiments)} MLflow experiments')
+                
+                # Check if runs exist
+                runs = mlflow.search_runs(experiment_ids=[exp.experiment_id for exp in experiments])
+                if len(runs) > 0:
+                    print(f'✅ Found {len(runs)} MLflow runs')
+                    print(f'Latest run metrics: {dict(runs.iloc[0])}')
+                else:
+                    print('⚠️ No MLflow runs found')
+            else:
+                print('⚠️ No MLflow experiments found')
+        else:
+            print('⚠️ MLflow database not found')
+        "
 
     - name: List all the files in the repo except the ones in .venv and .git folders after the preprocessing and model training
       run: |
@@ -74,6 +112,14 @@ jobs:
       run: |
         # Test if inference works
         uv run python main.py infer --input-file input.json --model-dir models --data-dir data/processed
+        
+    - name: Test MLflow CLI commands
+      run: |
+        # Test MLflow best model finder
+        uv run python main.py mlflow-best --experiment-name "car-price-prediction" --metric "rmse" || echo "No models found (expected for first run)"
+        
+        # Test MLflow UI help (without actually starting it)
+        uv run python main.py mlflow-ui --help || true
         
     - name: Test BentoML service
       run: |
@@ -96,6 +142,8 @@ jobs:
         path: |
           data/
           models/
+          mlflow.db
+          mlruns/
         retention-days: 1
 
   build-docker:

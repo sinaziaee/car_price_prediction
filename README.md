@@ -10,7 +10,9 @@ A machine learning service for predicting car prices with automated CI/CD pipeli
 - ✅ Dockerized deployment
 - ✅ BentoML service with REST API
 - ✅ GitHub Actions CI/CD pipeline
-- 🚧 MLFlow integration (planned)
+- ✅ MLFlow experiment tracking and model registry
+- ✅ MLFlow UI for experiment visualization
+- ✅ Automated model versioning and deployment
 - 🚧 AWS ECS/Lambda deployment (planned)
 - 🚧 Web scraping for data collection (planned)
 - 🚧 RAG with Gemini and Langchain (planned)
@@ -56,12 +58,17 @@ This project includes automated GitHub Actions workflows:
    uv run python main.py train-eval --data-dir data/processed --model-dir models
    ```
 
-4. **Run inference:**
+4. **Start MLflow UI:**
+   ```bash
+   uv run mlflow ui --host 0.0.0.0 --port 5000
+   ```
+
+5. **Run inference:**
    ```bash
    uv run python main.py infer --input-file input.json --model-dir models --data-dir data/processed
    ```
 
-5. **Start BentoML service:**
+6. **Start BentoML service:**
    ```bash
    uv run bentoml serve bentoml_service:CarPricePrediction --production
    ```
